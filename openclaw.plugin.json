@@ -1,0 +1,29 @@
+{
+  "id": "markplane-memory",
+  "name": "Markplane Memory",
+  "description": "Injects Markplane compressed project state into agent context. Gives your agent structured, task-oriented memory.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "contextFiles": {
+        "type": "array",
+        "items": { "type": "string" },
+        "default": ["summary.md"],
+        "description": "Which .context/ files to inject into the system prompt. Options: summary.md, active-work.md, blocked-items.md, metrics.md"
+      },
+      "contextHeader": {
+        "type": "string",
+        "default": "## Task Memory (Markplane)",
+        "description": "Header text prepended to injected context"
+      }
+    }
+  },
+  "uiHints": {
+    "contextFiles": {
+      "label": "Context files to inject",
+      "placeholder": "summary.md"
+    }
+  },
+  "skills": ["skills"]
+}
