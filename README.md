@@ -28,7 +28,7 @@ openclaw plugins install markplane-memory
 
 ## Setup
 
-The plugin handles context injection automatically. You still need two manual config edits in `~/.openclaw/openclaw.json`:
+The plugin handles context injection automatically. You still need one manual config edit in `~/.openclaw/openclaw.json`:
 
 ### Register the MCP server
 
@@ -49,26 +49,6 @@ Add an `mcp.servers` entry. The `--project` flag is required because the gateway
 ```
 
 This gives the agent access to Markplane's tools (`markplane_add`, `markplane_query`, `markplane_update`, etc.). If your workspace is at a non-default location, replace `~/.openclaw/workspace` with your actual `agents.defaults.workspace` path.
-
-### Update the compaction flush prompt
-
-This tells the agent to structure its memories into Markplane before context is compressed:
-
-```json
-{
-  "agents": {
-    "defaults": {
-      "compaction": {
-        "memoryFlush": {
-          "enabled": true,
-          "systemPrompt": "Session nearing compaction. Store durable memories now. Also use Markplane MCP tools to capture any tasks, decisions, or knowledge worth structuring.",
-          "prompt": "Write any lasting notes to memory/YYYY-MM-DD.md. Then use markplane_add to capture any new tasks or decisions, and markplane_update for any status changes. Run markplane_sync when done. Reply with NO_REPLY if nothing to store."
-        }
-      }
-    }
-  }
-}
-```
 
 ### Restart the gateway and start a new session
 
@@ -109,14 +89,33 @@ Example — inject both the summary and active work:
 }
 ```
 
+## Optional: Compaction flush prompt
+
+By default, OpenClaw's pre-compaction flush writes to daily log files. You can extend it to also structure items into Markplane before context is compressed. This overwrites the default flush prompt — review it before applying:
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "compaction": {
+        "memoryFlush": {
+          "enabled": true,
+          "systemPrompt": "Session nearing compaction. Store durable memories now. Also use Markplane MCP tools to capture any tasks, decisions, or knowledge worth structuring.",
+          "prompt": "Write any lasting notes to memory/YYYY-MM-DD.md. Then use markplane_add to capture any new tasks or decisions, and markplane_update for any status changes. Run markplane_sync when done. Reply with NO_REPLY if nothing to store."
+        }
+      }
+    }
+  }
+}
+```
+
 ## Manual setup (without the plugin)
 
 If you prefer not to use the plugin, you can set up Markplane manually. The trade-off: without the plugin, context injection relies on an instruction in `AGENTS.md` that can be lost during compaction.
 
 1. Install Markplane and run `markplane init` in your workspace (same as above)
 2. Register the MCP server in `openclaw.json` (same as above)
-3. Update the compaction flush prompt (same as above)
-4. Add to `~/.openclaw/workspace/AGENTS.md`:
+3. Add to `~/.openclaw/workspace/AGENTS.md`:
 
 ```markdown
 ## Task Memory (Markplane)
