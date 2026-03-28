@@ -2,6 +2,7 @@
   "name": "markplane-memory",
   "version": "0.1.0",
   "description": "Structured task-oriented memory for AI agents via Markplane",
+  "type": "module",
   "main": "dist/index.js",
   "files": [
     "dist",
@@ -9,7 +10,7 @@
     "openclaw.plugin.json"
   ],
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.14.0"
   },
   "openclaw": {
     "extensions": ["dist/index.js"]
@@ -22,7 +23,7 @@
     "typescript": "^5.0.0"
   },
   "peerDependencies": {
-    "openclaw": ">=2026.3.0"
+    "openclaw": ">=2026.3.24"
   },
   "keywords": ["openclaw", "plugin", "markplane", "memory", "task-management"],
   "license": "Apache-2.0",

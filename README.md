@@ -48,7 +48,7 @@ Add an `mcp.servers` entry. The `--project` flag is required because the gateway
 }
 ```
 
-This gives the agent access to Markplane's tools (`markplane_add`, `markplane_query`, `markplane_update`, etc.).
+This gives the agent access to Markplane's tools (`markplane_add`, `markplane_query`, `markplane_update`, etc.). If your workspace is at a non-default location, replace `~/.openclaw/workspace` with your actual `agents.defaults.workspace` path.
 
 ### Update the compaction flush prompt
 

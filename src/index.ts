@@ -1,12 +1,12 @@
-import { definePluginEntry } from "openclaw/plugin-sdk";
-import * as fs from "fs/promises";
-import * as path from "path";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
 
-export default definePluginEntry({
+const plugin = {
   id: "markplane-memory",
   name: "Markplane Memory",
 
-  register(api) {
+  register(api: OpenClawPluginApi) {
     // Inject .context/ files into the system prompt on every turn
     api.on(
       "before_prompt_build",
@@ -24,12 +24,12 @@ export default definePluginEntry({
         const contextDir = path.join(workspace, ".markplane", ".context");
 
         // Read plugin config
-        const pluginConfig =
-          api.config?.plugins?.entries?.["markplane-memory"]?.config;
-        const filesToInject: string[] =
-          pluginConfig?.contextFiles ?? ["summary.md"];
-        const header: string =
-          pluginConfig?.contextHeader ?? "## Task Memory (Markplane)";
+        const config = api.pluginConfig as {
+          contextFiles?: string[];
+          contextHeader?: string;
+        } | undefined;
+        const filesToInject = config?.contextFiles ?? ["summary.md"];
+        const header = config?.contextHeader ?? "## Task Memory (Markplane)";
 
         // Read each configured context file
         const sections: string[] = [];
@@ -50,7 +50,7 @@ export default definePluginEntry({
         }
 
         if (sections.length === 0) {
-          return {};
+          return;
         }
 
         return {
@@ -60,4 +60,6 @@ export default definePluginEntry({
       { priority: 5 }
     );
   },
-});
+};
+
+export default plugin;
