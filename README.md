@@ -70,18 +70,19 @@ This tells the agent to structure its memories into Markplane before context is 
 }
 ```
 
-### Restart the gateway
+### Restart the gateway and start a new session
 
 ```bash
 openclaw gateway restart
 ```
 
+If existing chat sessions don't pick up the plugin after restart, send `/new` to start a fresh session.
+
 ## Verifying it works
 
-1. Send any message to your agent
-2. Run `/context list` in the chat
-3. Look for the `## Task Memory (Markplane)` section in the system prompt
-4. The summary content should appear without the agent making any tool calls
+1. Ask your agent: "Do you see a Task Memory or Markplane section in your system prompt?" — the agent can confirm it sees the injected context
+2. Check that `markplane` appears in the agent's skills list (ask the agent, or check the Skills page in the web UI)
+3. Ask the agent to run `markplane_summary` to confirm MCP tools are working
 
 ## Configuration
 
