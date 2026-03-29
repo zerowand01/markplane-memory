@@ -2,37 +2,60 @@
 
 Structured task-oriented memory for AI agents via [Markplane](https://github.com/zerowand01/markplane).
 
-This OpenClaw plugin injects Markplane's compressed project state into the agent's system prompt on every turn — no tool calls, no instructions that get lost to compaction. The agent always knows current project state.
+This OpenClaw plugin injects Markplane's compressed project state into the agent's system prompt on every turn — no tool calls, no instructions that get lost to compaction. Your agent knows what's in progress, what's blocked, and what's next before it reads a single message.
 
-## What it does
+## Why Markplane for agent memory
+
+| Capability | OpenClaw today | With Markplane |
+|---|---|---|
+| Structure | Prose daily logs | Typed items with YAML frontmatter |
+| Compression | MEMORY.md (hand-curated, unbounded) | .context/summary.md (~1000 tokens, generated) |
+| Retrieval | Vector search over all files | INDEX.md routing — load only relevant items |
+| Relationships | None (text similarity only) | `depends_on`, `blocks`, `related`, `[[ID]]` cross-refs |
+| Status tracking | None | `draft → backlog → planned → in-progress → done` |
+| Prioritization | None | `critical / high / medium / low` with sorted context |
+| AI tool access | `memory_search` (semantic) | Full MCP server (query, show, add, update, sync) |
+
+Markplane complements, not replaces, OpenClaw's existing memory:
+
+| System | What it stores | Keep using? |
+|--------|---------------|-------------|
+| `MEMORY.md` | Identity, preferences, curated long-term context | Yes |
+| `memory/YYYY-MM-DD.md` | Daily logs, session transcripts | Yes |
+| `.markplane/` | Structured tasks, decisions, project state | New |
+
+Daily logs capture what happened. Markplane captures what needs to happen.
+
+## What the plugin does
 
 - **Injects `.context/summary.md` into the system prompt** via the `before_prompt_build` hook. The agent sees a ~1000-token project overview on every turn, automatically.
 - **Bundles a SKILL.md** that teaches the agent how to use Markplane (item types, MCP tools, what's worth capturing).
 - **Configurable** — choose which context files to inject and customize the header.
 
-## Prerequisites
+## Quick start
 
-1. **Markplane** installed on your system — see the [Markplane installation guide](https://github.com/zerowand01/markplane#installation) for options (Homebrew, shell script, pre-built binary, or build from source).
+### 1. Install Markplane
 
-2. **Markplane initialized** in your OpenClaw workspace:
-   ```bash
-   cd ~/.openclaw/workspace
-   markplane init --name "Agent Memory" --empty
-   ```
+See the [Markplane installation guide](https://github.com/zerowand01/markplane#installation) for options (Homebrew, shell script, pre-built binary, or build from source).
 
-## Installation
+### 2. Initialize in the OpenClaw workspace
+
+```bash
+cd ~/.openclaw/workspace
+markplane init --name "Agent Memory" --empty
+```
+
+The `--empty` flag skips starter content (sample tasks, etc.) that would clutter the agent's context with irrelevant onboarding material.
+
+### 3. Install the plugin
 
 ```bash
 openclaw plugins install @zerowand/markplane-memory
 ```
 
-## Setup
+### 4. Register the MCP server
 
-The plugin handles context injection automatically. You still need one manual config edit in `~/.openclaw/openclaw.json`:
-
-### Register the MCP server
-
-Add an `mcp.servers` entry. The `--project` flag is required because the gateway's working directory isn't your workspace, so markplane can't auto-discover `.markplane/`:
+Add an `mcp.servers` entry to `~/.openclaw/openclaw.json`. The `--project` flag is required because the gateway's working directory isn't your workspace, so markplane can't auto-discover `.markplane/`:
 
 ```json
 {
@@ -48,9 +71,9 @@ Add an `mcp.servers` entry. The `--project` flag is required because the gateway
 }
 ```
 
-This gives the agent access to Markplane's tools (`markplane_add`, `markplane_query`, `markplane_update`, etc.). If your workspace is at a non-default location, replace `~/.openclaw/workspace` with your actual `agents.defaults.workspace` path.
+If your workspace is at a non-default location, replace `~/.openclaw/workspace` with your actual `agents.defaults.workspace` path.
 
-### Restart the gateway and start a new session
+### 5. Restart the gateway
 
 ```bash
 openclaw gateway restart
@@ -58,11 +81,35 @@ openclaw gateway restart
 
 If existing chat sessions don't pick up the plugin after restart, send `/new` to start a fresh session.
 
-## Verifying it works
+### Verify it works
 
 1. Ask your agent: "Do you see a Task Memory or Markplane section in your system prompt?" — the agent can confirm it sees the injected context
 2. Check that `markplane` appears in the agent's skills list (ask the agent, or check the Skills page in the web UI)
 3. Ask the agent to run `markplane_summary` to confirm MCP tools are working
+
+## Web UI
+
+Markplane includes a local web dashboard — a visual interface for your agent's structured memory. Browse tasks on a kanban board, view the dependency graph, track epic progress, and manage the same items your agent works with:
+
+```bash
+cd ~/.openclaw/workspace    # or wherever you ran markplane init
+markplane serve --open
+```
+
+> **Note:** Markplane stores data in a `.markplane/` directory (hidden by default on macOS/Linux). Use `ls -a` or enable hidden files in your file manager to see it.
+
+See the [Markplane Web UI Guide](https://github.com/zerowand01/markplane/blob/master/docs/web-ui-guide.md) for details.
+
+## How it works
+
+Markplane generates compressed, AI-readable summaries in `.markplane/.context/`:
+
+- `summary.md` — project overview with active epics, blocked items, priority queue, and metrics (~1000 tokens)
+- `active-work.md` — currently in-progress tasks with details
+- `blocked-items.md` — items with unresolved dependencies
+- `metrics.md` — item counts by status and priority
+
+The plugin reads these files and appends them to the system prompt via the `before_prompt_build` lifecycle hook. By default, only `summary.md` is injected. The MCP server provides typed tools for creating and updating items.
 
 ## Configuration
 
@@ -132,21 +179,14 @@ Markplane items. Always run markplane_sync after changes.
 
 **Why the plugin is better:** The `AGENTS.md` instruction lives inside the context window and competes with conversation history during compaction — it can be summarized away. The plugin injects context into the system prompt, outside the conversation history, guaranteed on every turn.
 
-## What this plugin does NOT do
-
-- **Does not replace `memory-core`** — it complements OpenClaw's existing memory
-- **Does not bundle the Markplane binary** — requires separate installation
-- **Does not auto-run `markplane init`** — you initialize manually
-- **Does not auto-configure the MCP server** — you add the `mcp.servers` entry
-- **Does not modify the compaction flush prompt** — you update `memoryFlush` config
-
-## How it works
-
-Markplane stores project data as markdown files in `.markplane/` and generates compressed, AI-readable summaries in `.markplane/.context/`. The plugin reads these context files and appends them to the system prompt via the `before_prompt_build` lifecycle hook.
-
-The agent gets structured project state (tasks, epics, blockers, priorities) without spending tool calls. The MCP server provides typed tools for creating and updating items. The compaction flush prompt ensures the agent structures its knowledge before context is compressed.
-
-Daily logs capture what happened. Markplane captures what needs to happen.
+| | Plugin | Manual |
+|---|---|---|
+| Install | `openclaw plugins install @zerowand/markplane-memory` | Edit 2 config files + AGENTS.md |
+| Context injection | Automatic every turn via `before_prompt_build` | Relies on AGENTS.md (can be lost to compaction) |
+| MCP server | Requires `mcp.servers` config entry | Same |
+| Compaction flush | Optional `memoryFlush` config edit | Same |
+| SKILL.md | Bundled, auto-appears in skill list | Must manually create |
+| Survives compaction | Yes — system prompt injection is outside conversation history | No — competes with conversation history |
 
 ## License
 
