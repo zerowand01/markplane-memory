@@ -1,5 +1,5 @@
 {
-  "name": "markplane-memory",
+  "name": "@zerowand/markplane-memory",
   "version": "0.1.0",
   "description": "Structured task-oriented memory for AI agents via Markplane",
   "type": "module",

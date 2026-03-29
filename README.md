@@ -23,7 +23,7 @@ This OpenClaw plugin injects Markplane's compressed project state into the agent
 ## Installation
 
 ```bash
-openclaw plugins install markplane-memory
+openclaw plugins install @zerowand/markplane-memory
 ```
 
 ## Setup
@@ -66,7 +66,7 @@ If existing chat sessions don't pick up the plugin after restart, send `/new` to
 
 ## Configuration
 
-Configure in `~/.openclaw/openclaw.json` under `plugins.entries.markplane-memory.config`:
+Configure in `~/.openclaw/openclaw.json` under `plugins.entries.@zerowand/markplane-memory.config`:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
@@ -79,7 +79,7 @@ Example — inject both the summary and active work:
 {
   "plugins": {
     "entries": {
-      "markplane-memory": {
+      "@zerowand/markplane-memory": {
         "config": {
           "contextFiles": ["summary.md", "active-work.md"]
         }
